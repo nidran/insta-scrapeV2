@@ -50,7 +50,6 @@ class InstagramCrawler(object):
             self._driver = webdriver.PhantomJS()
         else:
             self._driver = webdriver.Firefox()
-
         self._driver.implicitly_wait(10)
         self.data = defaultdict(list)
 
@@ -97,17 +96,13 @@ class InstagramCrawler(object):
             # Need to login first before crawling followers/following
             print("You will need to login to crawl {}".format(crawl_type))
             self.login(authentication)
-
-            # Then browse target page
-            assert not query.startswith(
-                '#'), "Hashtag does not have followers/following!"
             self.browse_target_page(query)
-            # Scrape captions
             self.scrape_followers_or_following(crawl_type, query, number)
         else:
             print("Unknown crawl type: {}".format(crawl_type))
             self.quit()
             return
+
         # Save to directory
         print("Saving...")
         self.download_and_save(dir_prefix, query, crawl_type)
@@ -116,18 +111,10 @@ class InstagramCrawler(object):
         print("Quitting driver...")
         self.quit()
 
-    def browse_target_page(self, query):
-        # Browse Hashtags
-        if query.startswith('#'):
-            relative_url = urljoin('explore/tags/', query.strip('#'))
-        else:  # Browse user page
-            relative_url = query
-
+    def browse_target_page(self, query):        
+        relative_url = query
         target_url = urljoin(HOST, relative_url)
-
-        self._driver.get(target_url)
-
-    
+        self._driver.get(target_url)    
     
     def scrape_followers_or_following(self, crawl_type, query, number):
         print("Scraping {}...".format(crawl_type))
@@ -178,13 +165,10 @@ class InstagramCrawler(object):
 
     def download_and_save(self, dir_prefix, query, crawl_type):
         # Check if is hashtag
-        dir_name = query.lstrip(
-            '#') + '.hashtag' if query.startswith('#') else query
-
+        dir_name = query
         dir_path = os.path.join(dir_prefix, dir_name)
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
-
         print("Saving to directory: {}".format(dir_path))
 
     
@@ -203,13 +187,11 @@ def main():
     parser.add_argument('-d', '--dir_prefix', type=str,
                         default='./data/', help='directory to save results')
     parser.add_argument('-q', '--query', type=str, default='instagram',
-                        help="target to crawl, add '#' for hashtags")
+                        help="target to scrape")
     parser.add_argument('-t', '--crawl_type', type=str,
-                        default='photos', help="Options: 'photos' | 'followers' | 'following'")
+                        default='photos', help="Options: 'followers' | 'following'")
     parser.add_argument('-n', '--number', type=int, default=0,
                         help='Number of posts to download: integer')
-    parser.add_argument('-c', '--caption', action='store_true',
-                        help='Add this flag to download caption when downloading photos')
     parser.add_argument('-l', '--headless', action='store_true',
                         help='If set, will use PhantomJS driver to run script as headless')
     parser.add_argument('-a', '--authentication', type=str, default=None,
